@@ -1,80 +1,85 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const board = document.getElementById('board');
-  const cells = document.querySelectorAll('.cell');
-  const scoreX = document.getElementById('scoreX');
-  const scoreO = document.getElementById('scoreO');
-  const highScoreEl = document.getElementById('highScore');
-  const resetBtn = document.getElementById('resetBtn');
+let currentPlayer = "X";
+let board = ["","","","","","","","",""];
+let scoreX = 0;
+let scoreO = 0;
 
-  let currentPlayer = 'X';
-  let boardState = Array(9).fill('');
-  let scores = { X: 0, O: 0 };
-  let highScore = localStorage.getItem('highScore') || 0;
-  highScoreEl.textContent = highScore;
+let highScore = localStorage.getItem("highScore") || 0;
+document.getElementById("highScore").textContent = highScore;
 
-  const winningCombinations = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-  ];
+const boardDiv = document.getElementById("board");
 
-  function checkWinner() {
-    for (let combo of winningCombinations) {
-      const [a, b, c] = combo;
-      if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
-        scores[boardState[a]]++;
-        updateScores();
-        updateHighScore();
-        setTimeout(() => alert(`Player ${boardState[a]} wins!`), 100);
-        return true;
-      }
+const wins = [
+  [0,1,2],[3,4,5],[6,7,8],
+  [0,3,6],[1,4,7],[2,5,8],
+  [0,4,8],[2,4,6]
+];
+
+// create board
+for(let i=0;i<9;i++){
+  const cell = document.createElement("div");
+  cell.className = "cell";
+  cell.addEventListener("click", () => play(i, cell));
+  boardDiv.appendChild(cell);
+}
+
+function play(index, cell){
+  if(board[index] !== "") return;
+
+  board[index] = currentPlayer;
+  cell.textContent = currentPlayer;
+
+  if(checkWin()){
+    if(currentPlayer === "X"){
+      scoreX++;
+      document.getElementById("scoreX").textContent = scoreX;
+    }else{
+      scoreO++;
+      document.getElementById("scoreO").textContent = scoreO;
     }
-    if (!boardState.includes('')) {
-      setTimeout(() => alert("It's a draw!"), 100);
-      return true;
-    }
-    return false;
-  }
 
-  function updateScores() {
-    scoreX.textContent = scores.X;
-    scoreO.textContent = scores.O;
-  }
-
-  function updateHighScore() {
-    const maxScore = Math.max(scores.X, scores.O);
-    if (maxScore > highScore) {
+    let maxScore = Math.max(scoreX, scoreO);
+    if(maxScore > highScore){
       highScore = maxScore;
-      localStorage.setItem('highScore', highScore);
-      highScoreEl.textContent = highScore;
-    }
-  }
-
-  function handleClick(e) {
-    const index = e.target.dataset.index;
-    if (boardState[index] !== '') return;
-
-    boardState[index] = currentPlayer;
-    e.target.textContent = currentPlayer;
-
-    if (checkWinner()) {
-      resetBoard();
-      return;
+      localStorage.setItem("highScore", highScore);
+      document.getElementById("highScore").textContent = highScore;
     }
 
-    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+    setTimeout(() => {
+      alert("Player " + currentPlayer + " wins!");
+      clearBoard();
+    },100);
+    return;
   }
 
-  function resetBoard() {
-    boardState = Array(9).fill('');
-    cells.forEach(cell => cell.textContent = '');
-    currentPlayer = 'X';
+  if(!board.includes("")){
+    setTimeout(() => {
+      alert("Draw!");
+      clearBoard();
+    },100);
+    return;
   }
 
-  cells.forEach(cell => cell.addEventListener('click', handleClick));
-  resetBtn.addEventListener('click', () => {
-    resetBoard();
-    scores = { X: 0, O: 0 };
-    updateScores();
-  });
-});
+  currentPlayer = currentPlayer === "X" ? "O" : "X";
+}
+
+function checkWin(){
+  return wins.some(combo =>
+    board[combo[0]] &&
+    board[combo[0]] === board[combo[1]] &&
+    board[combo[0]] === board[combo[2]]
+  );
+}
+
+function clearBoard(){
+  board = ["","","","","","","","",""];
+  document.querySelectorAll(".cell").forEach(c => c.textContent="");
+  currentPlayer = "X";
+}
+
+function resetGame(){
+  clearBoard();
+  scoreX = 0;
+  scoreO = 0;
+  document.getElementById("scoreX").textContent = 0;
+  document.getElementById("scoreO").textContent = 0;
+}
